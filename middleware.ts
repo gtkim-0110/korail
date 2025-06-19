@@ -4,6 +4,10 @@ import type { NextRequest } from 'next/server';
 export async function middleware(request: NextRequest) {
   const token = request.cookies.get('token')?.value;
 
+  if (request.nextUrl.pathname.startsWith('/.well-known')) {
+    return NextResponse.next();  // Next.js 기본 처리 진행
+  }
+
   if (!token) {
     return NextResponse.redirect(new URL('/login', request.url));
   }

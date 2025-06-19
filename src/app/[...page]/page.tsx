@@ -1,31 +1,25 @@
-import dynamic from "next/dynamic";
 import {getMenuByPath} from "@/lib/getMenuByPath";
+import {getMenus} from "@/lib/menu/getMenus";
 
-const mapping = [
-  {
-    id: 1,
-    pId: null,
-    link: '/home',
-    component: 'Main'
-  },
-  {
-    id: 2,
-    pId: 1,
-    link: '/home/temp',
-    component: 'Main'
-  },
-]
+export default async function PageMapper({ params }: { params: Promise<{page: string[]}> }) {
 
-export default async function PageMapper(props: { params: { page?: string[] } }) {
+  const { page } = await params;
 
-  const { params } = await Promise.resolve(props);
-  const path = "/" + (params.page?.join("/") ?? "");
+  if (page?.[0] === '.well-known') {
+    return <div>Not Found</div>;
+  }
 
-  const menu = await getMenuByPath(path);
+  const path = "/" + (page?.join("/") ?? "");
 
-  const Component = dynamic(() => import(`@/app/pages/${menu}`), {
-    ssr: true,
-  });
+  const menus = await getMenus();
+  const menu = await getMenuByPath(path, menus); // 함수 내부에서 match
+
+  let Component;
+  try {
+    Component = (await import(`@/app/pages/${menu?.component}`)).default;
+  } catch (err) {
+    Component = () => <div>Component load fail</div>
+  }
 
   return <Component />
 }
